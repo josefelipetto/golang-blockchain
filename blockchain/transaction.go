@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
+	"log"
 )
 
 type Transaction struct {
@@ -70,4 +72,43 @@ func (input * TxInput) CanUnlock(data string)  bool {
 
 func (output *TxOutput) CanBeUnlocked(data string) bool {
 	return output.PubKey == data
+}
+
+func NewTransaction(from, to string, amount int, chain *BlockChain) * Transaction {
+	var inputs []TxInput
+	var outputs []TxOutput
+
+	acc, validOutputs := chain.FindSpendableOutputs(from, amount)
+
+	if acc < amount {
+		log.Panic("Account doesnt have enough funds")
+	}
+
+	for txId, outs := range validOutputs {
+		txID, err := hex.DecodeString(txId)
+		Handle(err)
+
+		for _, out := range outs {
+			inputs = append(inputs, TxInput{
+				ID:  txID,
+				Out: out,
+				Sig: from,
+			})
+		}
+	}
+
+	outputs = append(outputs, TxOutput{amount, to})
+
+	if acc > amount {
+		outputs = append(outputs, TxOutput{acc - amount, from})
+	}
+
+	tx := Transaction{
+		ID:      nil,
+		Inputs:  inputs,
+		Outputs: outputs,
+	}
+	tx.SetID()
+
+	return &tx
 }
