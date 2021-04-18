@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	dbPath = "./tmp/blocks"
-	dbFile = "./tmp/blocks/MANIFEST"
+	dbPath      = "./tmp/blocks"
+	dbFile      = "./tmp/blocks/MANIFEST"
 	genesisData = "First Transaction from Genesis"
 )
 
@@ -21,10 +21,10 @@ type BlockChain struct {
 
 type BlockChainIterator struct {
 	CurrentHash []byte
-	Database *badger.DB
+	Database    *badger.DB
 }
 
-func InitBlockChain(address string)  *BlockChain {
+func InitBlockChain(address string) *BlockChain {
 	var lastHash []byte
 
 	if DBExists() {
@@ -64,7 +64,11 @@ func InitBlockChain(address string)  *BlockChain {
 
 	Handle(err)
 
-	blockchain := BlockChain{LastHash: lastHash, Database: db}
+	blockchain := BlockChain{
+		LastHash: lastHash,
+		Database: db,
+	}
+
 	return &blockchain
 }
 
@@ -74,7 +78,7 @@ func ContinueBlockChain(address string) *BlockChain {
 		runtime.Goexit()
 	}
 
-	var lastHash[] byte
+	var lastHash []byte
 
 	opts := badger.DefaultOptions(dbPath)
 	opts.Dir = dbPath
@@ -104,7 +108,7 @@ func ContinueBlockChain(address string) *BlockChain {
 	return &chain
 }
 
-func (chain *BlockChain) AddBlock(transactions []*Transaction)  {
+func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 	var lastHash []byte
 
 	err := chain.Database.View(func(txn *badger.Txn) error {
@@ -119,7 +123,7 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction)  {
 	Handle(err)
 
 	newBlock := CreateBlock(transactions, lastHash)
-	
+
 	err = chain.Database.Update(func(txn *badger.Txn) error {
 		err := txn.Set(newBlock.Hash, newBlock.Serialize())
 		Handle(err)
@@ -140,7 +144,7 @@ func (chain *BlockChain) Iterator() *BlockChainIterator {
 	return iter
 }
 
-func (iter * BlockChainIterator) Next() *Block {
+func (iter *BlockChainIterator) Next() *Block {
 	var block *Block
 
 	err := iter.Database.View(func(txn *badger.Txn) error {
@@ -180,29 +184,29 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 
 		for _, tx := range block.Transactions {
 			txID := hex.EncodeToString(tx.ID)
-			Outputs:
-				for outIdx, out := range tx.Outputs {
-					if spentTransactions[txID] != nil {
-						for _, spentOut := range spentTransactions[txID] {
-							if spentOut == outIdx {
-								continue Outputs
-							}
+		Outputs:
+			for outIdx, out := range tx.Outputs {
+				if spentTransactions[txID] != nil {
+					for _, spentOut := range spentTransactions[txID] {
+						if spentOut == outIdx {
+							continue Outputs
 						}
 					}
+				}
 
-					if out.CanBeUnlocked(address) {
-						unspentTransactions = append(unspentTransactions, *tx)
+				if out.CanBeUnlocked(address) {
+					unspentTransactions = append(unspentTransactions, *tx)
+				}
+			}
+
+			if tx.IsCoinbase() == false {
+				for _, in := range tx.Inputs {
+					if in.CanUnlock(address) {
+						inTxID := hex.EncodeToString(in.ID)
+						spentTransactions[inTxID] = append(spentTransactions[inTxID], in.Out)
 					}
 				}
-				
-				if tx.IsCoinbase() == false {
-					for _, in := range tx.Inputs {
-						if in.CanUnlock(address) {
-							inTxID := hex.EncodeToString(in.ID)
-							spentTransactions[inTxID] = append(spentTransactions[inTxID], in.Out)
-						}
-					}
-				}
+			}
 		}
 
 		if len(block.PrevHash) == 0 {
@@ -228,25 +232,25 @@ func (chain *BlockChain) FindUTXO(address string) []TxOutput {
 	return UTXOs
 }
 
-func (chain *BlockChain) FindSpendableOutputs(address string, amount int) (int, map[string][]int){
+func (chain *BlockChain) FindSpendableOutputs(address string, amount int) (int, map[string][]int) {
 	unspentOuts := make(map[string][]int)
 	unspentTxs := chain.FindUnspentTransactions(address)
 	accumulated := 0
 
-	Work:
-		for _, tx := range unspentTxs {
-			txId := hex.EncodeToString(tx.ID)
-			for outputIdx, out := range tx.Outputs {
-				if out.CanBeUnlocked(address) && accumulated < amount {
-					accumulated += out.Value
-					unspentOuts[txId] = append(unspentOuts[txId], outputIdx)
+Work:
+	for _, tx := range unspentTxs {
+		txId := hex.EncodeToString(tx.ID)
+		for outputIdx, out := range tx.Outputs {
+			if out.CanBeUnlocked(address) && accumulated < amount {
+				accumulated += out.Value
+				unspentOuts[txId] = append(unspentOuts[txId], outputIdx)
 
-					if accumulated > amount {
-						break Work
-					}
+				if accumulated > amount {
+					break Work
 				}
 			}
 		}
+	}
 
 	return accumulated, unspentOuts
 }

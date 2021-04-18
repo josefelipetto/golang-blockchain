@@ -10,18 +10,18 @@ import (
 )
 
 type Transaction struct {
-	ID []byte
-	Inputs []TxInput
-	Outputs[]TxOutput
+	ID      []byte
+	Inputs  []TxInput
+	Outputs []TxOutput
 }
 
 type TxOutput struct {
-	Value int
+	Value  int
 	PubKey string
 }
 
 type TxInput struct {
-	ID []byte
+	ID  []byte
 	Out int
 	Sig string
 }
@@ -50,9 +50,9 @@ func CoinbaseTx(to, data string) *Transaction {
 	return &transaction
 }
 
-func (tx * Transaction) SetID()  {
+func (tx *Transaction) SetID() {
 	var encoded bytes.Buffer
-	var hash[32]byte
+	var hash [32]byte
 
 	encode := gob.NewEncoder(&encoded)
 	err := encode.Encode(tx)
@@ -62,11 +62,11 @@ func (tx * Transaction) SetID()  {
 	tx.ID = hash[:]
 }
 
-func (tx * Transaction) IsCoinbase() bool {
+func (tx *Transaction) IsCoinbase() bool {
 	return len(tx.Inputs) == 1 && len(tx.Inputs[0].ID) == 0 && tx.Inputs[0].Out == -1
 }
 
-func (input * TxInput) CanUnlock(data string)  bool {
+func (input *TxInput) CanUnlock(data string) bool {
 	return input.Sig == data
 }
 
@@ -74,7 +74,7 @@ func (output *TxOutput) CanBeUnlocked(data string) bool {
 	return output.PubKey == data
 }
 
-func NewTransaction(from, to string, amount int, chain *BlockChain) * Transaction {
+func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
 

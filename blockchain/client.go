@@ -1,9 +1,8 @@
-package main
+package blockchain
 
 import (
 	"flag"
 	"fmt"
-	"github.com/josefelipetto/golang-blockchain/blockchain"
 	"log"
 	"os"
 	"runtime"
@@ -29,7 +28,7 @@ func (cli *CommandLine) validateArgs() {
 }
 
 func (cli *CommandLine) printChain() {
-	chain := blockchain.ContinueBlockChain("")
+	chain := ContinueBlockChain("")
 	defer chain.Database.Close()
 	iter := chain.Iterator()
 
@@ -39,7 +38,7 @@ func (cli *CommandLine) printChain() {
 		fmt.Printf("Hash: %x\n", block.Hash)
 		fmt.Println("=====================================")
 
-		pow := blockchain.NewProof(block)
+		pow := NewProof(block)
 		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Println()
 
@@ -66,7 +65,7 @@ func (cli *CommandLine) run() {
 	switch os.Args[1] {
 	case "print":
 		err := printChainCmd.Parse(os.Args[2:])
-		blockchain.Handle(err)
+		Handle(err)
 	case "getbalance":
 		err := getBalanceCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -118,13 +117,13 @@ func (cli *CommandLine) run() {
 }
 
 func (cli *CommandLine) createBlockChain(address string) {
-	chain := blockchain.InitBlockChain(address)
-	_ = chain.Database.Close()
+	chain := InitBlockChain(address)
+	chain.Database.Close()
 	fmt.Println("Finished!")
 }
 
 func (cli *CommandLine) getBalance(address string) {
-	chain := blockchain.ContinueBlockChain(address)
+	chain := ContinueBlockChain(address)
 	defer chain.Database.Close()
 
 	balance := 0
@@ -138,16 +137,10 @@ func (cli *CommandLine) getBalance(address string) {
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
-	chain := blockchain.ContinueBlockChain(from)
+	chain := ContinueBlockChain(from)
 	defer chain.Database.Close()
 
-	tx := blockchain.NewTransaction(from, to, amount, chain)
-	chain.AddBlock([]*blockchain.Transaction{tx})
+	tx := NewTransaction(from, to, amount, chain)
+	chain.AddBlock([]*Transaction{tx})
 	fmt.Println("Sent successfully")
-}
-
-func main() {
-	defer os.Exit(0)
-	cli := CommandLine{}
-	cli.run()
 }

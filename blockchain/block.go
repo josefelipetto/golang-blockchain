@@ -28,7 +28,7 @@ func Genesis(coinbase *Transaction) *Block {
 	return CreateBlock([]*Transaction{coinbase}, []byte{})
 }
 
-func (b * Block) Serialize() []byte {
+func (b *Block) Serialize() []byte {
 	var res bytes.Buffer
 	encoder := gob.NewEncoder(&res)
 
@@ -39,7 +39,7 @@ func (b * Block) Serialize() []byte {
 	return res.Bytes()
 }
 
-func Deserialize(serialized []byte) * Block {
+func Deserialize(serialized []byte) *Block {
 	var block Block
 	decoder := gob.NewDecoder(bytes.NewReader(serialized))
 
@@ -50,13 +50,13 @@ func Deserialize(serialized []byte) * Block {
 	return &block
 }
 
-func Handle(err error)  {
+func Handle(err error) {
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
-func (b * Block ) HashTransactions() []byte {
+func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
 

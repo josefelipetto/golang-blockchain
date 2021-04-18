@@ -21,13 +21,13 @@ import (
 const Difficulty = 18
 
 type ProofOfWork struct {
-	Block *Block
+	Block  *Block
 	Target *big.Int
 }
 
-func (pow *ProofOfWork) Run () (int, []byte) {
+func (pow *ProofOfWork) Run() (int, []byte) {
 	var intHash big.Int
-	var hash[32]byte
+	var hash [32]byte
 
 	nonce := 0
 
@@ -49,7 +49,7 @@ func (pow *ProofOfWork) Run () (int, []byte) {
 	return nonce, hash[:]
 }
 
-func (pow * ProofOfWork) Validate() bool {
+func (pow *ProofOfWork) Validate() bool {
 	var intHash big.Int
 
 	data := pow.InitData(pow.Block.Nonce)
@@ -60,15 +60,14 @@ func (pow * ProofOfWork) Validate() bool {
 	return intHash.Cmp(pow.Target) == -1
 }
 
-
 func NewProof(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
-	target.Lsh(target, uint(256 - Difficulty))
+	target.Lsh(target, uint(256-Difficulty))
 	pow := &ProofOfWork{b, target}
 	return pow
 }
 
-func (pow * ProofOfWork) InitData(nonce int) []byte {
+func (pow *ProofOfWork) InitData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
