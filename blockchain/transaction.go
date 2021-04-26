@@ -23,7 +23,12 @@ type Transaction struct {
 
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
-		data = fmt.Sprintf("Coins to %s", to)
+		randData := make([]byte, 24)
+		_, err := rand.Read(randData)
+		if err != nil {
+			log.Panic(err)
+		}
+		data = fmt.Sprintf("%x", randData)
 	}
 
 	txin := TxInput{
@@ -33,7 +38,7 @@ func CoinbaseTx(to, data string) *Transaction {
 		PubKey: []byte(data),
 	}
 
-	txout := NewTxOutput(100, to)
+	txout := NewTxOutput(20, to)
 
 	transaction := Transaction{
 		ID:      nil,
@@ -41,21 +46,9 @@ func CoinbaseTx(to, data string) *Transaction {
 		Outputs: []TxOutput{*txout},
 	}
 
-	transaction.SetID()
+	transaction.ID = transaction.Hash()
 
 	return &transaction
-}
-
-func (tx *Transaction) SetID() {
-	var encoded bytes.Buffer
-	var hash [32]byte
-
-	encode := gob.NewEncoder(&encoded)
-	err := encode.Encode(tx)
-	Handle(err)
-
-	hash = sha256.Sum256(encoded.Bytes())
-	tx.ID = hash[:]
 }
 
 func (tx *Transaction) IsCoinbase() bool {
