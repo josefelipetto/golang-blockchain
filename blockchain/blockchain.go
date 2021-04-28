@@ -264,3 +264,20 @@ func (chain * BlockChain) VerifyTransaction(tx * Transaction) bool {
 
 	return tx.Verify(prevTXs)
 }
+
+func (chain * BlockChain) GetBestHeight() int {
+	return 0
+}
+
+func (chain * BlockChain) GetBlockHashes() [][]byte {
+	return [][]byte{}
+}
+
+func (chain *BlockChain) GetBlock(payloadId []byte) (Block, error) {
+	return Block{
+		Hash:         payloadId,
+		Transactions: nil,
+		PrevHash:     nil,
+		Nonce:        0,
+	}, nil
+}
